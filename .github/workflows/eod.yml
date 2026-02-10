@@ -1,0 +1,30 @@
+name: EOD ClosePrice Job
+
+on:
+  schedule:
+    - cron: '30 0 * * *' # UTC 00:30 = Asia/Taipei 08:30
+  workflow_dispatch:
+
+jobs:
+  run-eod:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      MONGODB_URI: ${{ secrets.MONGODB_URI }}
+      FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run EOD script
+        run: node src/scripts/eodClosePrice.job.js
