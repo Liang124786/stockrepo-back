@@ -2,7 +2,7 @@ import passport from 'passport'
 import passportLocal from 'passport-local'
 import passportJWT from 'passport-jwt'
 import bcrypt from 'bcryptjs'
-import User from '../models/User.js'
+import User from '../models/user.js'
 
 // passport.use(驗證方式,驗證策略(策略設定,策略執行後處理))
 // passportLocal 帳號密碼驗證策略，檢查帳號密碼欄位有沒有值
