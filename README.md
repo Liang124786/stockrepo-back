@@ -33,7 +33,7 @@
 - 每日由 GitHub Actions 自動執行，更新收盤價資料
 
 ## Environment
-```env
+
 
 API Base
 
