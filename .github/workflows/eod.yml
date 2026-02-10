@@ -12,6 +12,7 @@ jobs:
 
     env:
       DB_URL: ${{ secrets.DB_URL }}
+      MONGODB_URI: ${{ secrets.DB_URL }}
       FINMIND_TOKEN: ${{ secrets.FINMIND_TOKEN }}
       CLOSEPRICE_KEEP_LAST_N: ${{ secrets.CLOSEPRICE_KEEP_LAST_N }}
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
