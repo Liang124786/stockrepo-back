@@ -211,8 +211,8 @@ const main = async () => {
   // ======================
   // ⭐ 日期範圍寫在 code ⭐
   // ======================
-  const START_YMD = from || '2025-08-04'
-  const END_YMD = to || '2026-02-04' // 或用今天：formatYMD(new Date())
+  const START_YMD = from || '2026-02-05'
+  const END_YMD = to || '2026-02-10' // 或用今天：formatYMD(new Date())
   // ======================
 
   const startYMD = START_YMD
