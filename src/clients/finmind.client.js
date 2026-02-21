@@ -11,7 +11,6 @@ import { normalizeMarket } from '../utils/normalizeMarket.js'
  * - 不關心 Express / Controller
  *
  * 備註：
- * - 已廢除美股（US）相關支援
  * - market 允許傳入 TW / TWSE / TSE（normalizeMarket 會統一成 TW）
  */
 
@@ -74,55 +73,4 @@ export const getStockHistory = async ({ market, code, start_date, end_date }) =>
   }
 
   return res.data
-}
-
-/**
- * 取得最近一筆收盤資料（台股）
- */
-export const getLatestStockClose = async ({ market, code }) => {
-  const rows = await getStockHistory({ market, code })
-  if (rows.length === 0) return null
-
-  const latest = rows.reduce((a, b) => (String(b.date) > String(a.date) ? b : a))
-
-  return {
-    date: latest.date,
-    close: latest.close,
-    open: latest.open,
-    high: latest.max,
-    low: latest.min,
-    volume: latest.Trading_Volume ?? latest.trading_volume ?? latest.Volume ?? null,
-  }
-}
-
-/**
- * 【內部用】依日期抓台股全市場（日線）
- * - 僅給 backfill / job 用
- * - 不影響既有 getStockHistory 行為
- */
-export const getMarketByDate = async ({ date }) => {
-  ensureToken()
-
-  if (!date) throw new Error('finmind: date is required')
-
-  const { data } = await axios.get(`${FINMIND_BASE_URL}/data`, {
-    params: {
-      dataset: 'TaiwanStockPrice',
-      // ⚠️ 關鍵：不帶 data_id = 全市場
-      start_date: date,
-      end_date: date,
-      token: env.FINMIND_TOKEN,
-    },
-  })
-
-  if (!data) throw new Error('finmind: empty response')
-  if (data?.status !== 200 && data?.status !== 0 && data?.status !== '200') {
-    throw new Error(data?.msg || 'finmind: request failed')
-  }
-
-  if (!Array.isArray(data.data)) {
-    throw new Error('finmind: invalid data format')
-  }
-
-  return data.data
 }
