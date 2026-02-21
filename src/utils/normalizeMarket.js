@@ -1,5 +1,3 @@
-// src/utils/normalizeMarket.js
-
 /**
  * 對「後端內部查詢」用：
  * - 回傳「可能的 market aliases」
