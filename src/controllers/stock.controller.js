@@ -1,10 +1,9 @@
 import Stock from '../models/stock.js'
-import { ok, created } from '../utils/response.js'
+import { ok } from '../utils/response.js'
 import * as stockService from '../services/stock.service.js'
 import {
   BadRequestError,
   NotFoundError,
-  ConflictError,
   InternalServerError,
 } from '../utils/httpError.js'
 import { normalizeMarket } from '../utils/normalizeMarket.js'
@@ -45,7 +44,7 @@ const mapMongoErrorToHttpError = (error) => {
   }
 
   if (error?.name === 'MongoServerError' && error?.code === 11000) {
-    return new ConflictError('此市場與代號已存在')
+    return new InternalServerError('伺服器錯誤')
   }
 
   return new InternalServerError('伺服器錯誤')
@@ -137,105 +136,6 @@ export const getOne = async (req, res, next) => {
     return ok(res, { result: { ...stock, market: normalizeMarket(stock.market) } })
   } catch (error) {
     return next(error?.status ? error : mapMongoErrorToHttpError(error))
-  }
-}
-
-// POST /stocks
-export const create = async (req, res, next) => {
-  try {
-    // 對外統一市場：TW
-    const market = normalizeMarket(req.body?.market)
-    const symbol = normalizeSymbol(req.body?.symbol)
-    const name = normalizeText(req.body?.name)
-    const sector = normalizeText(req.body?.sector)
-
-    if (!market) throw new BadRequestError('market is required')
-    if (!symbol) throw new BadRequestError('symbol is required')
-    if (!name) throw new BadRequestError('name is required')
-
-    // ✅ 寫入 DB：台股統一存 TWSE（避免混亂）
-    const marketToStore = market === 'TW' ? 'TWSE' : market
-
-    const stock = await Stock.create({ market: marketToStore, symbol, name, sector })
-
-    return created(res, { result: { ...stock.toObject(), market } })
-  } catch (error) {
-    return next(mapMongoErrorToHttpError(error))
-  }
-}
-
-// PATCH /stocks/:market/:symbol
-export const update = async (req, res, next) => {
-  try {
-    const market = normalizeMarket(req.params?.market)
-    const symbol = normalizeSymbol(req.params?.symbol)
-
-    if (!market) throw new BadRequestError('market is required')
-    if (!symbol) throw new BadRequestError('symbol is required')
-
-    const patch = {}
-    if (req.body?.name !== undefined) patch.name = normalizeText(req.body.name)
-    if (req.body?.sector !== undefined) patch.sector = normalizeText(req.body.sector)
-    if (req.body?.isActive !== undefined) patch.isActive = Boolean(req.body.isActive)
-
-    const filter = { symbol }
-    if (market === 'TW') filter.market = { $in: ['TW', 'TWSE', 'TSE'] }
-    else filter.market = market
-
-    const stock = await Stock.findOneAndUpdate(filter, patch, {
-      new: true,
-      runValidators: true,
-    })
-      .select('market symbol name sector isActive')
-      .lean()
-
-    if (!stock) throw new NotFoundError('找不到股票')
-
-    return ok(res, { result: { ...stock, market: normalizeMarket(stock.market) } })
-  } catch (error) {
-    return next(error?.status ? error : mapMongoErrorToHttpError(error))
-  }
-}
-
-// DELETE /stocks/:market/:symbol
-export const remove = async (req, res, next) => {
-  try {
-    const market = normalizeMarket(req.params?.market)
-    const symbol = normalizeSymbol(req.params?.symbol)
-
-    if (!market) throw new BadRequestError('market is required')
-    if (!symbol) throw new BadRequestError('symbol is required')
-
-    const filter = { symbol }
-    if (market === 'TW') filter.market = { $in: ['TW', 'TWSE', 'TSE'] }
-    else filter.market = market
-
-    const stock = await Stock.findOneAndUpdate(filter, { isActive: false }, { new: true })
-      .select('market symbol name sector isActive')
-      .lean()
-
-    if (!stock) throw new NotFoundError('找不到股票')
-
-    return ok(res, { result: { ...stock, market: normalizeMarket(stock.market) } })
-  } catch (error) {
-    return next(error?.status ? error : mapMongoErrorToHttpError(error))
-  }
-}
-
-// 給 Treemap 用：拿某市場/某產業的 symbols（可選擇只拿 isActive）
-export const listForTreemap = async (req, res, next) => {
-  try {
-    const { market, sector, isActive } = req.query
-
-    const result = await stockService.listStocksForTreemap({
-      market: market ? normalizeMarket(market) : market,
-      sector,
-      isActive,
-    })
-
-    return ok(res, { result })
-  } catch (error) {
-    return next(new BadRequestError(error?.message || '查詢 Treemap 股票清單失敗'))
   }
 }
 

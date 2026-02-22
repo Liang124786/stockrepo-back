@@ -1,32 +1,4 @@
 /**
- * 對「後端內部查詢」用：
- * - 回傳「可能的 market aliases」
- * - 給 Mongo 查詢用（$in）
- */
-export const marketAliases = (input) => {
-  const m = String(input || '')
-    .toUpperCase()
-    .trim()
-
-  // UI / API 對外：TW
-  // DB 內部歷史包袱：TWSE / TSE /（保留 TW 以防舊資料）
-  if (m === 'TW' || m === 'TWSE' || m === 'TSE') {
-    return ['TW', 'TWSE', 'TSE']
-  }
-
-  // 若未來真的有分上市/上櫃
-  if (m === 'OTC' || m === 'TPEX') {
-    return ['OTC', 'TPEX']
-  }
-
-  // US 一致
-  if (m === 'US') return ['US']
-
-  // fallback（避免直接炸掉）
-  return [m]
-}
-
-/**
  * 對「service 層邏輯」用：
  * - 強制把外部 market 正規化成單一值
  * - 目前策略：台股一律回傳 'TW'

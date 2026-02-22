@@ -10,13 +10,6 @@ import dayjs from 'dayjs'
  */
 
 /**
- * 補 0（保留，避免破壞既有語意）
- */
-export function pad2(n) {
-  return String(n).padStart(2, '0')
-}
-
-/**
  * 轉成 YYYY-MM-DD
  * @param {string|number|Date|dayjs.Dayjs} input
  */
@@ -24,16 +17,6 @@ export function toDateString(input) {
   const d = input ? dayjs(input) : dayjs()
   if (!d.isValid()) return null
   return d.format('YYYY-MM-DD')
-}
-
-/**
- * 轉成 YYYY-MM-DD HH:mm:ss
- * @param {string|number|Date|dayjs.Dayjs} input
- */
-export function toDateTimeString(input) {
-  const d = input ? dayjs(input) : dayjs()
-  if (!d.isValid()) return null
-  return d.format('YYYY-MM-DD HH:mm:ss')
 }
 
 /**
@@ -45,19 +28,6 @@ export function normalizeYMD(input) {
   const d = dayjs(input)
   if (!d.isValid()) return null
   return d.format('YYYY-MM-DD')
-}
-
-/**
- * 比較兩個 YYYY-MM-DD
- * @returns {number} a-b：<0 表示 a<b
- */
-export function compareYMD(a, b) {
-  if (!a || !b) return 0
-  const da = dayjs(a)
-  const db = dayjs(b)
-  if (!da.isValid() || !db.isValid()) return 0
-  if (da.isSame(db, 'day')) return 0
-  return da.isBefore(db) ? -1 : 1
 }
 
 /**

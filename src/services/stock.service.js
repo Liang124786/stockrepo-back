@@ -54,24 +54,6 @@ export const getHistoryOHLCV = async ({ market, code, start_date, end_date }) =>
   return mapFinMindRowsToOHLCV(rows)
 }
 
-/**
- * 給前端用的一包資料（EOD only）
- * @returns {Promise<{ market:'TW', code:string, history:Array }>}
- */
-export const getStockChartBundle = async ({ market, code, start_date, end_date }) => {
-  const m = normalizeMarket(market)
-  const c = normalizeCode(code)
-
-  const history = await getHistoryOHLCV({
-    market: m,
-    code: c,
-    start_date,
-    end_date,
-  })
-
-  return { market: 'TW', code: c, history }
-}
-
 /* ---------------- helpers ---------------- */
 
 const numberOrNull = (v) => {
@@ -79,50 +61,6 @@ const numberOrNull = (v) => {
   if (v === '-' || v === '') return null
   const n = Number(v)
   return Number.isFinite(n) ? n : null
-}
-
-const toBoolOrNull = (v) => {
-  if (v === undefined) return null
-  if (v === 'true' || v === true) return true
-  if (v === 'false' || v === false) return false
-  return null
-}
-
-/**
- * stocks collection：DB 內 market 為 TWSE/TPEX（對外統一傳 TW）
- */
-const toStockMarkets = (market) => {
-  const m = normalizeMarket(market) // 僅允許 TW
-  if (m === 'TW') return ['TWSE', 'TPEX', 'TSE', 'TW']
-  return [m]
-}
-
-export const listStocksForTreemap = async ({ market, sector, isActive }) => {
-  const q = {}
-
-  q.market = { $in: toStockMarkets(market) }
-
-  if (sector) q.sector = String(sector).trim()
-
-  const active = toBoolOrNull(isActive)
-  if (active !== null) q.isActive = active
-
-  const rows = await Stock.find(q).select('symbol name sector').lean()
-  return rows.map((r) => ({
-    symbol: String(r.symbol || '')
-      .toUpperCase()
-      .trim(),
-    name: r.name,
-    sector: r.sector,
-  }))
-
-  return rows
-    .map((r) =>
-      String(r.symbol || '')
-        .toUpperCase()
-        .trim(),
-    )
-    .filter(Boolean)
 }
 
 export const listSectors = async ({ market }) => {
