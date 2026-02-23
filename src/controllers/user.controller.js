@@ -12,6 +12,28 @@ import {
 } from '../utils/httpError.js'
 import { normalizeMarket } from '../utils/normalizeMarket.js'
 
+const uniqueWatchlistItems = (items = []) => {
+  const seen = new Set()
+  const result = []
+
+  for (const it of items) {
+    const market = String(it?.market ?? '')
+      .trim()
+      .toUpperCase()
+    const symbol = String(it?.symbol ?? '')
+      .trim()
+      .toUpperCase()
+
+    if (!market || !symbol) continue
+    const key = `${market}:${symbol}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    result.push({ market, symbol })
+  }
+
+  return result
+}
+
 // post /
 export const create = async (req, res, next) => {
   try {
@@ -63,7 +85,7 @@ export const login = async (req, res, next) => {
       result: {
         account: req.user.account,
         role: req.user.role,
-        watchlist: req.user.watchlist?.length ?? 0,
+        watchlist: uniqueWatchlistItems(req.user.watchlist).length,
         token,
       },
     })
@@ -83,8 +105,8 @@ export const profile = async (req, res, next) => {
         account: u?.account ?? req.user.account,
         role: u?.role ?? req.user.role,
         watchlist: Array.isArray(u?.watchlist)
-          ? u.watchlist.length
-          : (req.user.watchlist?.length ?? 0),
+          ? uniqueWatchlistItems(u.watchlist).length
+          : uniqueWatchlistItems(req.user.watchlist).length,
         avatar: u?.avatarUrl || null,
       },
     })
@@ -136,7 +158,7 @@ export const getWatchlist = async (req, res, next) => {
     // 1. 取使用者 watchlist（純資料）
     const user = await User.findById(req.user._id).select('watchlist').lean()
 
-    const list = Array.isArray(user?.watchlist) ? user.watchlist : []
+    const list = uniqueWatchlistItems(user?.watchlist)
     if (list.length === 0) {
       return ok(res, { result: [] })
     }
@@ -188,15 +210,28 @@ export const addWatchlist = async (req, res, next) => {
     // ✅ 寫入 user.watchlist：台股統一存 TW（不要存 TWSE）
     const item = { symbol, market }
 
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { $addToSet: { watchlist: item } },
+    // 使用條件更新避免重複：只有不存在同 market+symbol 才新增
+    let user = await User.findOneAndUpdate(
+      {
+        _id: req.user._id,
+        watchlist: { $not: { $elemMatch: item } },
+      },
+      { $push: { watchlist: item } },
       { new: true, runValidators: true },
     ).select('watchlist')
 
-    const items = Array.isArray(user?.watchlist)
-      ? user.watchlist.map((it) => ({ market: it.market, symbol: it.symbol }))
-      : []
+    if (!user) {
+      user = await User.findById(req.user._id).select('watchlist')
+    }
+
+    const rawItems = Array.isArray(user?.watchlist) ? user.watchlist : []
+    const items = uniqueWatchlistItems(rawItems)
+
+    // 若歷史資料已有重複，順便清理成唯一組合
+    if (items.length !== rawItems.length) {
+      await User.findByIdAndUpdate(req.user._id, { $set: { watchlist: items } })
+    }
+
     return ok(res, { result: items })
   } catch (error) {
     console.log(error)
@@ -228,9 +263,7 @@ export const removeWatchlist = async (req, res, next) => {
       { new: true },
     ).select('watchlist')
 
-    const items = Array.isArray(user?.watchlist)
-      ? user.watchlist.map((it) => ({ market: it.market, symbol: it.symbol }))
-      : []
+    const items = uniqueWatchlistItems(user?.watchlist)
     return ok(res, { result: items })
   } catch (error) {
     console.log(error)
