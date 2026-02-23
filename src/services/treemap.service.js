@@ -2,7 +2,7 @@ import Stock from '../models/stock.js'
 import * as closePriceService from './closePrice.service.js'
 import { normalizeMarket } from '../utils/normalizeMarket.js'
 
-export const getTreemapItems = async ({ market, symbols, limit = 30 }) => {
+export const getTreemapItems = async ({ market, symbols, limit = 50 }) => {
   const m = normalizeMarket(market)
   const list = Array.isArray(symbols) ? symbols : []
 

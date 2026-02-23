@@ -15,8 +15,8 @@ export const list = async (req, res, next) => {
     const m = normalizeMarket(market)
     if (!m) throw new Error('market 不合法')
 
-    // 固定只用 0050
-    const symbols = symbols0050
+    // 固定只用 0050 成分；市場摘要不納入 ETF（代號 00 開頭）
+    const symbols = symbols0050.filter((symbol) => !String(symbol || '').startsWith('00'))
 
 
     const result = await treemapService.getTreemapItems({
