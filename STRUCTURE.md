@@ -59,7 +59,6 @@
 
 ### `back/src/services/`
 - `admin.service.js`: 管理員 job 的建立與狀態更新邏輯（EOD、sector sync）。
-- `auth.service.js`: 註冊/登入/取得個人資料的商業邏輯與 token 產生。
 - `closePrice.service.js`: 收盤價抓取、正規化、入庫與查詢邏輯。
 - `eod.service.js`: EOD 任務入口（將 days 轉換日期區間並觸發收盤價刷新）。
 - `sector.service.js`: 產業清單彙整邏輯（統計 sector 與 symbols）。
