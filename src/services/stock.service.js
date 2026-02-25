@@ -8,7 +8,6 @@ import { BadRequestError } from '../utils/httpError.js'
  *
  * 核心責任：
  * - 僅使用 FinMind 收盤 / 歷史資料
- * - 不再提供即時報價（已移除 TWSE）
  * - 統一資料格式給 controller / 前端（OHLCV）
  */
 
